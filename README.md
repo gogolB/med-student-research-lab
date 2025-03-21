@@ -1,6 +1,28 @@
-# Medical Research AI Framework
+# MedResearch AI Assistant
 
-A framework designed to help medical students conduct data science-based research through a team of specialized AI agents.
+An AI-powered research assistant that helps medical students conduct data science projects through a team of specialized AI agents.
+
+## Features
+
+- Chat-based interface for interacting with AI agents
+- Multiple specialized agents (statistics, data analysis, visualization, etc.)
+- Tool integration (web search, document processing, command line)
+- Conversation memory for continuous project assistance
+- Support for data upload and processing
+
+## Setup
+
+1. Clone this repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Create a `.env` file with your API keys (see `.env.example`)
+4. Run the application: `python main.py`
+
+## Usage
+
+1. Start a new project with `/new project`
+2. Upload data with `/upload`
+3. Describe your research goals and ask questions
+4. The AI agent team will guide you through your data science project
 
 ## Overview
 
