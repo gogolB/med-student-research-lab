@@ -549,7 +549,7 @@ class DataValidator(Agent):
         if conversation_id:
             history = memory.get_conversation_history(conversation_id, max_messages=5)
             if history:
-                context = "Previous conversation:\n" + "\n".join([[
+                context = "Previous conversation:\n" + "\n".join([
                     f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content']}"
                     for msg in history
                 ])
@@ -873,7 +873,7 @@ class NHANESExpert(Agent):
             history = memory.get_conversation_history(conversation_id, max_messages=5)
             if history:
                 context = "Previous conversation:\n" + "\n".join([
-                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content']}"
                     for msg in history
                 ])
         
@@ -899,7 +899,7 @@ class DataPreprocessor(Agent):
             history = memory.get_conversation_history(conversation_id, max_messages=5)
             if history:
                 context = "Previous conversation:\n" + "\n".join([
-                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content']}"
                     for msg in history
                 ])
         
@@ -928,7 +928,7 @@ class NotebookGenerator(Agent):
             history = memory.get_conversation_history(conversation_id, max_messages=10)
             if history:
                 context = "Previous conversation:\n" + "\n".join([
-                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content']}"
                     for msg in history
                 ])
         
@@ -966,7 +966,7 @@ class DataVisualizer(Agent):
             history = memory.get_conversation_history(conversation_id, max_messages=5)
             if history:
                 context = "Previous conversation:\n" + "\n".join([
-                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content']}"
                     for msg in history
                 ])
         
