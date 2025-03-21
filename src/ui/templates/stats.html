@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistical Analysis - Medical Research AI Framework</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Medical Research AI Framework</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('query') }}">Research Query</a></li>
+                    <li><a href="{{ url_for('design') }}">Study Design</a></li>
+                    <li><a href="{{ url_for('stats') }}" class="active">Statistical Analysis</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Get Statistical Advice</h2>
+        <p>Describe your data and research question to receive recommendations on appropriate statistical methods.</p>
+        
+        <form method="POST" action="{{ url_for('stats') }}">
+            <div class="form-group">
+                <label for="question">Statistical question:</label>
+                <textarea id="question" name="question" rows="4" placeholder="E.g., Which statistical test should I use to compare drug efficacy between three treatment groups?" required></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="data_type">Data type:</label>
+                    <select id="data_type" name="data_type">
+                        <option value="">Select data type</option>
+                        <option value="continuous">Continuous</option>
+                        <option value="categorical">Categorical</option>
+                        <option value="time-series">Time-series</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="outcome">Outcome type:</label>
+                    <select id="outcome" name="outcome">
+                        <option value="">Select outcome type</option>
+                        <option value="continuous">Continuous</option>
+                        <option value="binary">Binary</option>
+                        <option value="time-to-event">Time-to-event</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn primary">Get Statistical Advice</button>
+        </form>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Medical Research AI Framework</p>
+        </div>
+    </footer>
+</body>
+</html>

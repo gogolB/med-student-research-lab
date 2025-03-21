@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Query - Medical Research AI Framework</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Medical Research AI Framework</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('query') }}" class="active">Research Query</a></li>
+                    <li><a href="{{ url_for('design') }}">Study Design</a></li>
+                    <li><a href="{{ url_for('stats') }}">Statistical Analysis</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Ask a Research Question</h2>
+        <p>Type your research question below and our AI assistants will provide guidance.</p>
+        
+        <form method="POST" action="{{ url_for('query') }}">
+            <div class="form-group">
+                <label for="query">Your research question:</label>
+                <textarea id="query" name="query" rows="4" placeholder="E.g., What are the best methods for studying the relationship between sleep and cardiovascular disease?" required></textarea>
+            </div>
+            <button type="submit" class="btn primary">Submit Question</button>
+        </form>
+        
+        <div class="examples">
+            <h3>Example Questions</h3>
+            <ul>
+                <li>How should I design a cohort study for diabetes patients?</li>
+                <li>What are appropriate inclusion and exclusion criteria for a study on hypertension?</li>
+                <li>What statistical tests are appropriate for comparing three treatment groups?</li>
+                <li>How can I calculate the required sample size for my clinical trial?</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Medical Research AI Framework</p>
+        </div>
+    </footer>
+</body>
+</html>

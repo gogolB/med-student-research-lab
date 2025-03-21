@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+  research-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: research-ai
+    ports:
+      - "8000:8000"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=research-ai
+    depends_on:
+      - otel-collector
+    networks:
+      - research-ai-network
+
+  # SignOz OpenTelemetry Collector
+  otel-collector:
+    image: signoz/otelcol:0.76.1
+    container_name: signoz-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./signoz/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"  # OTLP gRPC receiver
+      - "4318:4318"  # OTLP HTTP receiver
+    networks:
+      - research-ai-network
+
+  # SignOz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.12.0
+    container_name: signoz-frontend
+    depends_on:
+      - signoz-query-service
+    ports:
+      - "3301:3301"
+    networks:
+      - research-ai-network
+
+  # SignOz Query Service
+  signoz-query-service:
+    image: signoz/query-service:0.12.0
+    container_name: signoz-query-service
+    depends_on:
+      - clickhouse
+    ports:
+      - "8080:8080"
+    environment:
+      - ClickHouseUrl=tcp://clickhouse:9000
+    networks:
+      - research-ai-network
+
+  # ClickHouse for SignOz
+  clickhouse:
+    image: clickhouse/clickhouse-server:22.6.1
+    container_name: signoz-clickhouse
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./signoz/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
+      - ./signoz/clickhouse-data:/var/lib/clickhouse
+    networks:
+      - research-ai-network
+
+networks:
+  research-ai-network:
+    driver: bridge

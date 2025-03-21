@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Research AI Framework</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Medical Research AI Framework</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('query') }}">Research Query</a></li>
+                    <li><a href="{{ url_for('design') }}">Study Design</a></li>
+                    <li><a href="{{ url_for('stats') }}">Statistical Analysis</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>AI-Powered Research Assistant for Medical Students</h2>
+            <p>Access specialized expertise in research methodology, statistics, and clinical domains without requiring coding knowledge.</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('query') }}" class="btn primary">Ask a Research Question</a>
+                <a href="{{ url_for('design') }}" class="btn secondary">Design a Study</a>
+                <a href="{{ url_for('stats') }}" class="btn secondary">Get Statistical Help</a>
+            </div>
+        </section>
+
+        <section class="features">
+            <h2>Key Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Multi-agent System</h3>
+                    <p>Access specialized expertise in research methodology, statistics, and clinical domains.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Research Workflow Support</h3>
+                    <p>Get guidance through each step of the research process.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Collaborative Agents</h3>
+                    <p>AI agents work together to solve complex research problems.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Medical Research AI Framework</p>
+        </div>
+    </footer>
+</body>
+</html>

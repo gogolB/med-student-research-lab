@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Design - Medical Research AI Framework</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Medical Research AI Framework</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('query') }}">Research Query</a></li>
+                    <li><a href="{{ url_for('design') }}" class="active">Study Design</a></li>
+                    <li><a href="{{ url_for('stats') }}">Statistical Analysis</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Design a Research Study</h2>
+        <p>Enter your research question and get recommendations for study design methodology.</p>
+        
+        <form method="POST" action="{{ url_for('design') }}">
+            <div class="form-group">
+                <label for="question">Research question:</label>
+                <textarea id="question" name="question" rows="4" placeholder="E.g., Does regular exercise reduce the risk of developing type 2 diabetes in obese adults?" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="domain">Medical domain:</label>
+                <select id="domain" name="domain">
+                    <option value="general medicine">General Medicine</option>
+                    <option value="cardiology">Cardiology</option>
+                    <option value="neurology">Neurology</option>
+                    <option value="endocrinology">Endocrinology</option>
+                    <option value="oncology">Oncology</option>
+                    <option value="pediatrics">Pediatrics</option>
+                    <option value="psychiatry">Psychiatry</option>
+                    <option value="public health">Public Health</option>
+                </select>
+            </div>
+            <button type="submit" class="btn primary">Design Study</button>
+        </form>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Medical Research AI Framework</p>
+        </div>
+    </footer>
+</body>
+</html>

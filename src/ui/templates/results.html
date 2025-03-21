@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - Medical Research AI Framework</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Medical Research AI Framework</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('query') }}">Research Query</a></li>
+                    <li><a href="{{ url_for('design') }}">Study Design</a></li>
+                    <li><a href="{{ url_for('stats') }}">Statistical Analysis</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="results-section">
+            <h2>Results</h2>
+            
+            <div class="query-box">
+                <h3>Your Question:</h3>
+                <p>{{ query }}</p>
+            </div>
+            
+            <div class="response-box">
+                <h3>AI Response:</h3>
+                
+                {% if 'error' in response %}
+                    <div class="error-message">
+                        <p>{{ response.error }}</p>
+                    </div>
+                {% else %}
+                    {% if 'agent' in response %}
+                        <p class="agent-info">Agent: {{ response.agent }}</p>
+                    {% endif %}
+                    
+                    {% if 'agents' in response %}
+                        <p class="agent-info">Agents consulted: {{ response.agents|join(', ') }}</p>
+                    {% endif %}
+                    
+                    {% if 'response' in response %}
+                        <div class="response-content">
+                            {% for key, value in response.response.items() %}
+                                <div class="response-section">
+                                    <h4>{{ key|replace('_', ' ')|title }}</h4>
+                                    {% if value is mapping %}
+                                        <ul>
+                                        {% for subkey, subvalue in value.items() %}
+                                            <li><strong>{{ subkey|replace('_', ' ')|title }}:</strong> {{ subvalue }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% elif value is iterable and value is not string %}
+                                        <ul>
+                                        {% for item in value %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>{{ value }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if 'synthesized_response' in response %}
+                        <div class="synthesized-response">
+                            <h4>Synthesized Response:</h4>
+                            {% for key, value in response.synthesized_response.items() %}
+                                <div class="response-section">
+                                    <h5>{{ key|replace('_', ' ')|title }}</h5>
+                                    {% if value is mapping %}
+                                        <ul>
+                                        {% for subkey, subvalue in value.items() %}
+                                            <li><strong>{{ subkey|replace('_', ' ')|title }}:</strong> {{ subvalue }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% elif value is iterable and value is not string %}
+                                        <ul>
+                                        {% for item in value %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>{{ value }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <div class="action-buttons">
+                <a href="javascript:history.back()" class="btn secondary">Back</a>
+                <a href="{{ url_for('index') }}" class="btn primary">Home</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Medical Research AI Framework</p>
+        </div>
+    </footer>
+</body>
+</html>
