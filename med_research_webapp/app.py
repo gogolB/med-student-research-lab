@@ -335,6 +335,156 @@ def project_query(project_id):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+from multi_agent_framework import memory, NotebookTemplate
+import json
+import nbformat
+import base64
+
+# New routes for data and notebook functionality
+@app.route('/api/nhanes/datasets', methods=['GET'])
+def get_nhanes_datasets():
+    """Get available NHANES datasets information"""
+    # This would ideally be from a database, but for demo we'll use a static list
+    nhanes_data = {
+        "cycles": ["2017-2018", "2015-2016", "2013-2014", "2011-2012", "2009-2010"],
+        "categories": {
+            "Demographics": ["DEMO", "DEMO_G", "DEMO_H", "DEMO_I", "DEMO_J"], 
+            "Dietary": ["DR1IFF", "DR2IFF", "DSQIDS", "DSQTOT", "DSPI"],
+            "Examination": ["BMX", "BPX", "OHXDEN", "VIX", "AUXWBG"],
+            "Laboratory": ["BIOPRO", "CBC", "HEPA", "HDL", "FASTQX"],
+            "Questionnaire": ["ACQ", "ALQ", "BPQ", "DIQ", "MCQ", "PAQ"]
+        },
+        "popular_variables": {
+            "BMI": {"dataset": "BMX", "variable": "BMXBMI", "description": "Body Mass Index (kg/m²)"},
+            "Blood Pressure": {"dataset": "BPX", "variable": "BPXSY1", "description": "Systolic Blood Pressure (mm Hg)"},
+            "Diabetes": {"dataset": "DIQ", "variable": "DIQ010", "description": "Doctor told you have diabetes"},
+            "Cholesterol": {"dataset": "HDL", "variable": "LBDHDD", "description": "Direct HDL-Cholesterol (mg/dL)"},
+            "Physical Activity": {"dataset": "PAQ", "variable": "PAD680", "description": "Minutes vigorous recreational activities"}
+        }
+    }
+    return jsonify(nhanes_data)
+
+@app.route('/api/notebook/generate', methods=['POST'])
+def generate_notebook():
+    """Generate a Jupyter notebook based on specifications"""
+    data = request.json
+    notebook_type = data.get('type', 'nhanes')
+    research_question = data.get('research_question', 'Untitled Research')
+    datasets = data.get('datasets', [])
+    
+    try:
+        if notebook_type == 'nhanes':
+            notebook_json = NotebookTemplate.create_nhanes_basic_template(datasets, research_question)
+            # Create valid notebook format
+            notebook = nbformat.reads(notebook_json, as_version=4)
+            
+            # Convert to base64 for download
+            notebook_bytes = nbformat.writes(notebook).encode('utf-8')
+            notebook_b64 = base64.b64encode(notebook_bytes).decode('utf-8')
+            
+            filename = research_question.lower().replace(' ', '_')[:30] + '_analysis.ipynb'
+            
+            return jsonify({
+                "notebook_b64": notebook_b64,
+                "filename": filename,
+                "success": True
+            })
+        else:
+            return jsonify({"error": "Unsupported notebook type"}), 400
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/projects/<project_id>/notebooks', methods=['POST'])
+def create_project_notebook(project_id):
+    """Create a notebook for a specific project"""
+    data = request.json
+    notebook_type = data.get('type', 'nhanes')
+    research_question = data.get('research_question', 'Untitled Research')
+    datasets = data.get('datasets', [])
+    
+    try:
+        # Check if the project exists
+        project = project_manager.get_project(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+        
+        if notebook_type == 'nhanes':
+            notebook_json = NotebookTemplate.create_nhanes_basic_template(datasets, research_question)
+            
+            # Save notebook metadata to project
+            if 'notebooks' not in project.metadata:
+                project.metadata['notebooks'] = []
+                
+            notebook_id = str(uuid.uuid4())
+            notebook_info = {
+                "id": notebook_id,
+                "name": research_question,
+                "type": notebook_type,
+                "datasets": datasets,
+                "created_at": datetime.datetime.now().isoformat(),
+                "notebook_json": notebook_json
+            }
+            
+            project.metadata['notebooks'].append(notebook_info)
+            project_manager.save_projects()
+            
+            # Return notebook data without the full JSON content
+            notebook_info_response = {k: v for k, v in notebook_info.items() if k != 'notebook_json'}
+            
+            return jsonify({
+                "notebook": notebook_info_response,
+                "success": True
+            })
+        else:
+            return jsonify({"error": "Unsupported notebook type"}), 400
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/projects/<project_id>/notebooks/<notebook_id>', methods=['GET'])
+def get_project_notebook(project_id, notebook_id):
+    """Get a specific notebook from a project"""
+    try:
+        # Check if the project exists
+        project = project_manager.get_project(project_id)
+        if not project:
+            return jsonify({"error": "Project not found"}), 404
+            
+        # Find the notebook
+        if 'notebooks' not in project.metadata:
+            return jsonify({"error": "No notebooks in this project"}), 404
+            
+        notebook = next((nb for nb in project.metadata['notebooks'] if nb['id'] == notebook_id), None)
+        if not notebook:
+            return jsonify({"error": "Notebook not found"}), 404
+            
+        # Create valid notebook format
+        notebook_json = notebook['notebook_json']
+        nb = nbformat.reads(notebook_json, as_version=4)
+        
+        # Convert to base64 for download
+        notebook_bytes = nbformat.writes(nb).encode('utf-8')
+        notebook_b64 = base64.b64encode(notebook_bytes).decode('utf-8')
+        
+        filename = notebook['name'].lower().replace(' ', '_')[:30] + '_analysis.ipynb'
+        
+        return jsonify({
+            "notebook": {
+                "id": notebook['id'],
+                "name": notebook['name'],
+                "type": notebook['type'],
+                "datasets": notebook['datasets'],
+                "created_at": notebook['created_at']
+            },
+            "notebook_b64": notebook_b64,
+            "filename": filename,
+            "success": True
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     print("Starting Medical Research AI Web Application...")
     print(f"Using {Config.BACKEND.upper()} backend")

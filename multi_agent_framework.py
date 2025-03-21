@@ -865,6 +865,162 @@ agents = {
     )
 }
 
+# Add specialized data agents
+class NHANESExpert(Agent):
+    def generate_prompt(self, query: str, conversation_id: str = None) -> str:
+        context = ""
+        if conversation_id:
+            history = memory.get_conversation_history(conversation_id, max_messages=5)
+            if history:
+                context = "Previous conversation:\n" + "\n".join([
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    for msg in history
+                ])
+        
+        return f"""You are an expert on NHANES (National Health and Nutrition Examination Survey) data. You know all about 
+        the different cycles, available datasets, variables, codebooks, and how to access and use this data properly.
+        Provide detailed guidance on selecting, downloading, and analyzing NHANES data, including which variables would 
+        be relevant for specific research questions.
+        
+        {context}
+        
+        Student's query: {query}
+
+        Assistant:"""
+    
+    def suggest_next_agents(self, query: str, response: str) -> List[str]:
+        # After providing NHANES guidance, suggest data preprocessing and analysis
+        return ["data_preprocessor", "notebook_generator", "coder"]
+
+class DataPreprocessor(Agent):
+    def generate_prompt(self, query: str, conversation_id: str = None) -> str:
+        context = ""
+        if conversation_id:
+            history = memory.get_conversation_history(conversation_id, max_messages=5)
+            if history:
+                context = "Previous conversation:\n" + "\n".join([
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    for msg in history
+                ])
+        
+        return f"""You are an expert in preprocessing medical research data, particularly NHANES data. You can guide students on:
+        1. Cleaning and preprocessing steps for various datasets
+        2. Handling missing values
+        3. Recoding variables
+        4. Merging datasets correctly (especially important for NHANES)
+        5. Converting data types appropriately
+        6. Creating new derived variables
+        
+        {context}
+        
+        Student's query: {query}
+
+        Assistant:"""
+    
+    def suggest_next_agents(self, query: str, response: str) -> List[str]:
+        # After preprocessing, suggest analysis and visualization
+        return ["statistical_analyst", "coder", "notebook_generator"]
+
+class NotebookGenerator(Agent):
+    def generate_prompt(self, query: str, conversation_id: str = None) -> str:
+        context = ""
+        if conversation_id:
+            history = memory.get_conversation_history(conversation_id, max_messages=10)
+            if history:
+                context = "Previous conversation:\n" + "\n".join([
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    for msg in history
+                ])
+        
+        return f"""You are an expert in creating Jupyter notebooks for medical data analysis. You can generate 
+        complete, ready-to-run notebook templates with appropriate sections and code cells. Focus on creating notebooks
+        that follow best practices including:
+        
+        1. Clear markdown documentation
+        2. Step-by-step analysis workflow
+        3. Data acquisition code
+        4. Preprocessing steps
+        5. Exploratory analysis
+        6. Statistical testing
+        7. Visualization
+        8. Results interpretation
+        
+        When asked to generate a notebook, provide the full notebook content with both markdown and code cells, 
+        formatted properly for direct use in a Jupyter environment.
+        
+        {context}
+        
+        Student's request: {query}
+
+        Assistant:"""
+    
+    def process_response(self, response: str) -> str:
+        """Process to keep notebook formatting intact"""
+        # Special handling to preserve notebook format
+        return response
+
+class DataVisualizer(Agent):
+    def generate_prompt(self, query: str, conversation_id: str = None) -> str:
+        context = ""
+        if conversation_id:
+            history = memory.get_conversation_history(conversation_id, max_messages=5)
+            if history:
+                context = "Previous conversation:\n" + "\n".join([
+                    f"{msg['role']} ({msg.get('agent', 'unknown')}): {msg['content'][:200]}"
+                    for msg in history
+                ])
+        
+        return f"""You are an expert in data visualization for medical research, specializing in Python tools 
+        like matplotlib, seaborn, and plotly. Provide code for creating effective, publication-quality visualizations
+        for medical data, with proper color schemes, annotations, and formatting.
+        
+        {context}
+        
+        Student's query: {query}
+
+        Assistant:"""
+    
+    def process_response(self, response: str) -> str:
+        pattern = r'```python\n(.*?)\n```'
+        match = re.search(pattern, response, re.DOTALL)
+        if match:
+            return match.group(1)
+        # Try without language specifier
+        pattern = r'```\n(.*?)\n```'
+        match = re.search(pattern, response, re.DOTALL)
+        if match:
+            return match.group(1)
+        return response
+
+# Add new agents to the agents dictionary
+agents.update({
+    "nhanes_expert": NHANESExpert(
+        "NHANES Expert",
+        "Specialist in NHANES datasets and variables",
+        ["nhanes", "cdc", "survey", "dataset", "health survey", "nutrition", "examination"]
+    ),
+    "data_preprocessor": DataPreprocessor(
+        "Data Preprocessor",
+        "Expert in cleaning and preparing medical data",
+        ["preprocess", "clean", "data preparation", "missing values", "merge", "recode", "filter"]
+    ),
+    "notebook_generator": NotebookGenerator(
+        "Notebook Generator",
+        "Creates complete Jupyter notebooks for analysis",
+        ["notebook", "jupyter", "template", "report", "analysis workflow", "generate", "script"]
+    ),
+    "data_visualizer": DataVisualizer(
+        "Data Visualizer",
+        "Creates publication-quality visualizations",
+        ["visualization", "plot", "chart", "graph", "figure", "matplotlib", "seaborn", "plotly"],
+        "code"
+    )
+})
+
+# Add new agents to research team
+for agent_id in ["nhanes_expert", "data_preprocessor", "notebook_generator", "data_visualizer"]:
+    research_team.add_agent(agent_id, agents[agent_id])
+
 # Create a research team with all agents
 research_team = Team("Medical Research Lab")
 for agent_id, agent in agents.items():
@@ -1853,6 +2009,375 @@ def initialize_project_management():
         traceback.print_exc()
         raise
 
+# Notebook generation utilities
+class NotebookTemplate:
+    """Class for generating notebook templates for various analyses"""
+    
+    @staticmethod
+    def create_nhanes_basic_template(dataset_names: List[str], research_question: str) -> str:
+        """Generate a basic NHANES analysis notebook template"""
+        template = {
+            "cells": [
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "# NHANES Data Analysis: " + research_question + "\n",
+                        "This notebook provides a complete workflow for analyzing NHANES data to investigate the research question."
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 1. Setup and Import Libraries\n",
+                        "First, we'll import the necessary libraries for data processing, analysis, and visualization."
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Import standard data analysis libraries\n",
+                        "import pandas as pd\n",
+                        "import numpy as np\n",
+                        "import matplotlib.pyplot as plt\n",
+                        "import seaborn as sns\n",
+                        "\n",
+                        "# Statistical analysis\n",
+                        "from scipy import stats\n",
+                        "import statsmodels.api as sm\n",
+                        "from statsmodels.formula.api import ols\n",
+                        "\n",
+                        "# NHANES specific libraries\n",
+                        "import requests\n",
+                        "from io import BytesIO\n",
+                        "\n",
+                        "# Set plot style\n",
+                        "plt.style.use('seaborn-v0_8-whitegrid')\n",
+                        "sns.set_context('notebook')\n",
+                        "\n",
+                        "# Display settings\n",
+                        "pd.set_option('display.max_columns', 100)\n",
+                        "pd.set_option('display.max_rows', 100)"
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 2. Data Acquisition\n",
+                        "Now we'll download the NHANES datasets needed for this analysis."
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Define NHANES datasets to download\n",
+                        "datasets = " + str(dataset_names) + "\n",
+                        "\n",
+                        "# Function to download NHANES data\n",
+                        "def download_nhanes_data(cycle, dataset):\n",
+                        "    \"\"\"Download an NHANES dataset for a specific cycle\"\"\"\n",
+                        "    base_url = f'https://wwwn.cdc.gov/Nchs/Nhanes/{cycle}/'\n",
+                        "    url = base_url + dataset + '.XPT'\n",
+                        "    \n",
+                        "    print(f\"Downloading {dataset} from {cycle}...\")\n",
+                        "    try:\n",
+                        "        response = requests.get(url)\n",
+                        "        response.raise_for_status()\n",
+                        "        data = pd.read_sas(BytesIO(response.content))\n",
+                        "        print(f\"Downloaded {dataset}: {data.shape[0]} rows, {data.shape[1]} columns\")\n",
+                        "        return data\n",
+                        "    except Exception as e:\n",
+                        "        print(f\"Error downloading {dataset}: {e}\")\n",
+                        "        return None\n",
+                        "\n",
+                        "# Download selected datasets (example for 2017-2018 cycle)\n",
+                        "cycle = '2017-2018'\n",
+                        "data_frames = {}\n",
+                        "\n",
+                        "for dataset in datasets:\n",
+                        "    data_frames[dataset] = download_nhanes_data(cycle, dataset)"
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 3. Data Preprocessing\n",
+                        "Next, we'll clean and prepare the data for analysis."
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Inspect dataset structure\n",
+                        "for name, df in data_frames.items():\n",
+                        "    if df is not None:\n",
+                        "        print(f\"\\nDataset: {name}\")\n",
+                        "        print(df.info())\n",
+                        "        print(\"\\nSample:\")\n",
+                        "        display(df.head())"
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Merge datasets using SEQN as the unique identifier\n",
+                        "def merge_nhanes_data(data_frames):\n",
+                        "    \"\"\"Merge NHANES datasets using SEQN as key\"\"\"\n",
+                        "    merged_data = None\n",
+                        "    \n",
+                        "    for name, df in data_frames.items():\n",
+                        "        if df is None:\n",
+                        "            continue\n",
+                        "            \n",
+                        "        # Convert column names to lowercase for consistency\n",
+                        "        df.columns = [col.lower() for col in df.columns]\n",
+                        "        \n",
+                        "        if merged_data is None:\n",
+                        "            merged_data = df.copy()\n",
+                        "        else:\n",
+                        "            # Merge with previous datasets\n",
+                        "            merged_data = pd.merge(merged_data, df, on='seqn', how='inner')\n",
+                        "    \n",
+                        "    return merged_data\n",
+                        "\n",
+                        "# Merge the datasets\n",
+                        "merged_data = merge_nhanes_data(data_frames)\n",
+                        "print(f\"Merged dataset shape: {merged_data.shape}\")\n",
+                        "merged_data.head()"
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Clean and preprocess data\n",
+                        "def clean_nhanes_data(df):\n",
+                        "    \"\"\"Clean NHANES data by handling missing values and recoding\"\"\"\n",
+                        "    # Make a copy to avoid modifying the original\n",
+                        "    data = df.copy()\n",
+                        "    \n",
+                        "    # Check for missing values\n",
+                        "    missing_summary = data.isnull().sum()\n",
+                        "    print(\"\\nMissing values summary:\")\n",
+                        "    print(missing_summary[missing_summary > 0])\n",
+                        "    \n",
+                        "    # Recode special values (NHANES often uses negative values for missing/refused)\n",
+                        "    for col in data.columns:\n",
+                        "        if data[col].dtype in [np.float64, np.int64]:\n",
+                        "            # Replace negative values with NaN (typical NHANES coding)\n",
+                        "            data[col] = data[col].apply(lambda x: np.nan if x is not None and x < 0 else x)\n",
+                        "    \n",
+                        "    # Drop rows with too many missing values (customize this threshold)\n",
+                        "    missing_threshold = 0.5  # 50% threshold\n",
+                        "    data = data.dropna(thresh=int(len(data.columns) * (1-missing_threshold)), axis=0)\n",
+                        "    \n",
+                        "    print(f\"\\nShape after cleaning: {data.shape}\")\n",
+                        "    \n",
+                        "    return data\n",
+                        "\n",
+                        "# Clean the merged data\n",
+                        "clean_data = clean_nhanes_data(merged_data)"
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 4. Exploratory Data Analysis\n",
+                        "Let's explore the data through summary statistics and visualizations."
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Summary statistics\n",
+                        "summary_stats = clean_data.describe()\n",
+                        "summary_stats"
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Distribution visualizations for key variables\n",
+                        "def plot_distributions(data, variables, figsize=(15, 10)):\n",
+                        "    \"\"\"Plot distributions for selected variables\"\"\"\n",
+                        "    if not variables:\n",
+                        "        print(\"No variables selected for plotting\")\n",
+                        "        return\n",
+                        "        \n",
+                        "    # Filter to include only variables in the dataset\n",
+                        "    available_vars = [var for var in variables if var in data.columns]\n",
+                        "    \n",
+                        "    if not available_vars:\n",
+                        "        print(\"None of the specified variables are in the dataset\")\n",
+                        "        return\n",
+                        "    \n",
+                        "    n_cols = 2\n",
+                        "    n_rows = (len(available_vars) + 1) // n_cols\n",
+                        "    \n",
+                        "    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)\n",
+                        "    axes = axes.flatten()\n",
+                        "    \n",
+                        "    for i, var in enumerate(available_vars):\n",
+                        "        ax = axes[i]\n",
+                        "        \n",
+                        "        # Check if variable is categorical or continuous\n",
+                        "        if data[var].nunique() < 10 or data[var].dtype == 'object':\n",
+                        "            # Categorical variable\n",
+                        "            sns.countplot(x=var, data=data, ax=ax)\n",
+                        "            ax.set_title(f'Distribution of {var}')\n",
+                        "            if data[var].nunique() > 5:\n",
+                        "                ax.tick_params(axis='x', rotation=45)\n",
+                        "        else:\n",
+                        "            # Continuous variable\n",
+                        "            sns.histplot(data[var].dropna(), kde=True, ax=ax)\n",
+                        "            ax.set_title(f'Distribution of {var}')\n",
+                        "            \n",
+                        "    # Hide any unused subplots\n",
+                        "    for j in range(i+1, len(axes)):\n",
+                        "        fig.delaxes(axes[j])\n",
+                        "        \n",
+                        "    plt.tight_layout()\n",
+                        "    plt.show()\n",
+                        "\n",
+                        "# Example: Plot distributions for key variables (replace with actual variable names)\n",
+                        "key_variables = ['bmxbmi', 'bmxwt', 'bmxht']  # Example variables\n",
+                        "plot_distributions(clean_data, key_variables)"
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 5. Statistical Analysis\n",
+                        "Now let's conduct statistical tests to answer our research question."
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Statistical analysis (customize based on your research question)\n",
+                        "# Example: Linear regression\n",
+                        "def run_regression_analysis(data, dependent_var, independent_vars):\n",
+                        "    \"\"\"Run a multiple linear regression analysis\"\"\"\n",
+                        "    # Prepare formula for statsmodels\n",
+                        "    formula = f\"{dependent_var} ~ {' + '.join(independent_vars)}\"\n",
+                        "    \n",
+                        "    try:\n",
+                        "        # Fit the model\n",
+                        "        model = ols(formula, data=data).fit()\n",
+                        "        \n",
+                        "        # Print summary\n",
+                        "        print(model.summary())\n",
+                        "        \n",
+                        "        return model\n",
+                        "    except Exception as e:\n",
+                        "        print(f\"Error running regression: {e}\")\n",
+                        "        return None\n",
+                        "\n",
+                        "# Example regression (replace with variables relevant to your research question)\n",
+                        "# dependent_var = 'bmxbmi'  # Body Mass Index\n",
+                        "# independent_vars = ['ridageyr', 'riagendr']  # Age and gender\n",
+                        "# model = run_regression_analysis(clean_data, dependent_var, independent_vars)"
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 6. Visualization of Results\n",
+                        "Let's create publication-quality visualizations of our findings."
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "source": [
+                        "# Create publication-quality visualizations\n",
+                        "def create_publication_plot(data, x, y, hue=None, kind='scatter', figsize=(10, 6)):\n",
+                        "    \"\"\"Create a publication-quality plot for key relationships\"\"\"\n",
+                        "    plt.figure(figsize=figsize)\n",
+                        "    \n",
+                        "    if kind == 'scatter':\n",
+                        "        ax = sns.scatterplot(x=x, y=y, hue=hue, data=data)\n",
+                        "        # Add regression line\n",
+                        "        sns.regplot(x=x, y=y, data=data, scatter=False, ax=ax)\n",
+                        "    elif kind == 'box':\n",
+                        "        ax = sns.boxplot(x=x, y=y, hue=hue, data=data)\n",
+                        "    elif kind == 'bar':\n",
+                        "        ax = sns.barplot(x=x, y=y, hue=hue, data=data)\n",
+                        "    elif kind == 'violin':\n",
+                        "        ax = sns.violinplot(x=x, y=y, hue=hue, data=data, inner='quartile')\n",
+                        "    else:\n",
+                        "        print(f\"Plot type {kind} not recognized\")\n",
+                        "        return\n",
+                        "    \n",
+                        "    # Set labels and title\n",
+                        "    plt.xlabel(x, fontsize=12)\n",
+                        "    plt.ylabel(y, fontsize=12)\n",
+                        "    plt.title(f'Relationship between {x} and {y}', fontsize=14)\n",
+                        "    \n",
+                        "    # Style improvements\n",
+                        "    plt.tight_layout()\n",
+                        "    plt.grid(alpha=0.3)\n",
+                        "    \n",
+                        "    if hue:\n",
+                        "        plt.legend(title=hue, fontsize=10, title_fontsize=12)\n",
+                        "    \n",
+                        "    plt.show()\n",
+                        "\n",
+                        "# Example visualization (replace with variables from your analysis)\n",
+                        "# create_publication_plot(clean_data, x='ridageyr', y='bmxbmi', hue='riagendr')"
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "## 7. Interpretation and Conclusions\n",
+                        "In this section, summarize your findings and their implications."
+                    ]
+                },
+                {
+                    "cell_type": "markdown",
+                    "source": [
+                        "*Write your conclusions here after completing the analysis. Consider:*\n",
+                        "* What patterns or relationships did you find?\n",
+                        "* Were your hypotheses supported or rejected?\n",
+                        "* What are the limitations of your analysis?\n",
+                        "* What implications do your findings have for medical research or practice?\n",
+                        "* What future research directions would you recommend?"
+                    ]
+                }
+            ],
+            "metadata": {
+                "kernelspec": {
+                    "display_name": "Python 3",
+                    "language": "python",
+                    "name": "python3"
+                },
+                "language_info": {
+                    "codemirror_mode": {
+                        "name": "ipython",
+                        "version": 3
+                    },
+                    "file_extension": ".py",
+                    "mimetype": "text/x-python",
+                    "name": "python",
+                    "nbconvert_exporter": "python",
+                    "pygments_lexer": "ipython3",
+                    "version": "3.8.10"
+                }
+            },
+            "nbformat": 4,
+            "nbformat_minor": 4
+        }
+        
+        # Convert to JSON and back to string for formatting
+        import json
+        notebook_json = json.dumps(template, indent=2)
+        return notebook_json
+    
+    @staticmethod
+    def create_custom_data_template(dataset_description: str, research_question: str) -> str:
+        """Generate a template for custom data analysis"""
+        # Similar to the NHANES template but with custom data loading instead
+        # Implementation here...
+        pass
+
 # Call this function to start the chat interface
 if __name__ == "__main__" or 'get_ipython' in globals():
     try:
@@ -1860,4 +2385,3 @@ if __name__ == "__main__" or 'get_ipython' in globals():
     except Exception as e:
         print(f"Error during initialization: {str(e)}")
         traceback.print_exc()
-``` 

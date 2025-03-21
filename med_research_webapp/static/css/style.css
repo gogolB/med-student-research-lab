@@ -285,3 +285,63 @@ code {
     display: inline-block;
     vertical-align: -0.125em;
 }
+
+/* Data browser styles */
+.popular-variable {
+    padding: 8px;
+    border-left: 3px solid #0d6efd;
+    background-color: #f8f9fa;
+    margin-bottom: 8px;
+}
+
+#datasetCheckboxes {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.dataset-checkbox {
+    margin-right: 8px;
+}
+
+#selectedDatasetsList ul {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Notebook generator styles */
+#notebookGeneratorForm {
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    margin-bottom: 15px;
+}
+
+#notebookStatus {
+    transition: all 0.3s ease;
+}
+
+/* Tab navigation */
+.nav-tabs .nav-tab {
+    position: relative;
+}
+
+.nav-tabs .nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 25%;
+    width: 50%;
+    height: 3px;
+    background-color: #0d6efd;
+    border-radius: 3px;
+}
+
+/* NHANES tips */
+.list-group-item {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}

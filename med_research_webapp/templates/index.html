@@ -10,43 +10,89 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Additional inline styles if needed */
+        .project-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-color: #007bff;
+        }
+        .project-card.active {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+        .project-timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        #projectsView, #chatView, #dataView {
+            display: none;
+        }
+        .nav-tab {
+            cursor: pointer;
+        }
+        .nav-tab.active {
+            font-weight: bold;
+            border-bottom: 2px solid #007bff;
+        }
+        .agent-contribution {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar for settings -->
+            <!-- Sidebar for settings and navigation -->
             <div class="col-md-3 col-lg-2 sidebar">
                 <div class="sidebar-header">
                     <h4>Medical Research AI</h4>
                 </div>
                 <div class="sidebar-content">
+                    <div class="nav-tabs mb-4">
+                        <div class="row text-center">
+                            <div class="col-4 nav-tab active" id="chatTab">Chat</div>
+                            <div class="col-4 nav-tab" id="projectsTab">Projects</div>
+                            <div class="col-4 nav-tab" id="dataTab">Data</div>
+                        </div>
+                    </div>
+                    <!-- Backend settings section -->
                     <div class="backend-info mb-3">
-                        <small>Using <span id="backend-label">OPENAI</span> backend</small>
+                        <h5>Backend Settings</h5>
+                        <form id="backendForm">
+                            <div class="mb-2">
+                                <label for="backendSelect" class="form-label">API Provider</label>
+                                <select class="form-select form-select-sm" id="backendSelect">
+                                    <option value="openai">OpenAI</option>
+                                    <option value="nim">NVIDIA NIM</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label for="apiKey" class="form-label">API Key</label>
+                                <input type="password" class="form-control form-control-sm" id="apiKey" placeholder="Enter API key">
+                            </div>
+                            <div class="mb-2">
+                                <label for="modelName" class="form-label">Model Name</label>
+                                <input type="text" class="form-control form-control-sm" id="modelName" placeholder="e.g., gpt-3.5-turbo">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                        </form>
                     </div>
-                    
-                    <h5>Settings</h5>
-                    <div class="mb-3">
-                        <label for="backend-select" class="form-label">Backend</label>
-                        <select id="backend-select" class="form-select form-select-sm">
-                            <option value="openai">OpenAI</option>
-                            <option value="nim">NVIDIA NIM</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="api-key" class="form-label">API Key</label>
-                        <input type="password" id="api-key" class="form-control form-control-sm" placeholder="Enter API key">
-                    </div>
-                    <div class="mb-3">
-                        <label for="model" class="form-label">Model</label>
-                        <input type="text" id="model" class="form-control form-control-sm" placeholder="Enter model name">
-                    </div>
-                    <button id="update-backend" class="btn btn-primary btn-sm">Update Settings</button>
                     
                     <div class="mt-4">
                         <h5>About</h5>
                         <p class="small">
                             This web application provides access to a multi-agent AI system specially designed 
-                            for medical research. It can help you analyze NHANES data, generate code, 
+                            for medical research. It can help you analyze data, generate code, 
                             and answer research questions.
                         </p>
                     </div>
@@ -55,72 +101,262 @@
             
             <!-- Main content area -->
             <div class="col-md-9 col-lg-10 main-content">
-                <div class="main-header">
-                    <h1>Medical Research AI Assistant</h1>
-                    <p class="lead">Ask research questions, generate code, and analyze NHANES data with AI assistance</p>
-                </div>
-                
-                <!-- Example topics accordion -->
-                <div class="accordion mb-4" id="exampleTopics">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingOne">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
-                                Example Questions
-                            </button>
-                        </h2>
-                        <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#exampleTopics">
-                            <div class="accordion-body">
-                                <ul>
-                                    <li><a href="#" class="example-question">What are the key components of the Mediterranean diet and how might they impact cardiovascular health?</a></li>
-                                    <li><a href="#" class="example-question">What statistical approaches are best for analyzing the relationship between dietary patterns and blood pressure in NHANES data?</a></li>
-                                    <li><a href="#" class="example-question">Generate Python code to download and preprocess NHANES dietary data for cardiovascular analysis</a></li>
-                                    <li><a href="#" class="example-question">How should I interpret the correlation between Mediterranean diet adherence and lower LDL cholesterol?</a></li>
-                                    <li><a href="#" class="example-question">What confounding variables should I control for when analyzing diet and cardiovascular outcomes?</a></li>
-                                    <li><a href="#" class="example-question">What innovative research questions could extend our understanding of diet and heart health?</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Conversation area -->
-                <div class="conversation-container mb-4" id="conversation-container">
-                    <!-- Welcome message -->
-                    <div class="message system">
-                        <div class="message-content">
-                            <p>👋 Welcome to the Medical Research AI Assistant! Ask me any question about medical research, 
-                            NHANES data analysis, or request code for data processing and visualization.</p>
+                <!-- Chat View -->
+                <div id="chatView">
+                    <div class="main-header">
+                        <h1>Medical Research AI Assistant</h1>
+                        <p class="lead">Ask research questions, generate code, and analyze medical data with AI assistance</p>
+                        <div id="currentProjectBadge" class="mb-3" style="display: none;">
+                            <span class="badge bg-primary">Current Project: <span id="currentProjectName"></span></span>
+                            <button id="leaveProjectBtn" class="btn btn-sm btn-outline-secondary ms-2">Leave Project</button>
                         </div>
                     </div>
                     
-                    <!-- Messages will be added here dynamically -->
-                </div>
-                
-                <!-- Input area -->
-                <div class="input-container">
-                    <div class="input-group">
-                        <textarea id="query-input" class="form-control" placeholder="Ask your medical research question..." rows="2"></textarea>
-                        <button id="submit-button" class="btn btn-primary">
-                            Ask <i class="bi bi-send"></i>
-                        </button>
+                    <!-- Example topics accordion -->
+                    <div class="accordion mb-4" id="exampleTopics">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    Example Questions
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#exampleTopics">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li><a href="#" class="example-question">How do I formulate a research question about diabetes and cardiovascular outcomes?</a></li>
+                                        <li><a href="#" class="example-question">Can you help me analyze NHANES data for BMI trends?</a></li>
+                                        <li><a href="#" class="example-question">What statistical test should I use to compare two treatment groups?</a></li>
+                                        <li><a href="#" class="example-question">Write Python code to clean and visualize clinical trial data.</a></li>
+                                        <li><a href="#" class="example-question">What are the ethical considerations for my research on vulnerable populations?</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Input form -->
+                    <div class="query-form mb-4">
+                        <form id="queryForm">
+                            <div class="form-group">
+                                <label for="queryInput">Ask your medical research question:</label>
+                                <textarea class="form-control" id="queryInput" rows="3" placeholder="e.g., How do I design a clinical trial to test a new diabetes medication?"></textarea>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="collaborationToggle" checked>
+                                <label class="form-check-label" for="collaborationToggle">
+                                    Enable collaboration between agents
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Response area -->
+                    <div class="response-area mb-4">
+                        <h3>Response</h3>
+                        <div id="processingIndicator" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="ms-2">Processing your query...</span>
+                        </div>
+                        <div id="responseContent" class="p-3 border rounded bg-light">
+                            <p class="text-muted">Your response will appear here...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Conversation history -->
+                    <div class="conversation-history">
+                        <h3>Conversation History</h3>
+                        <div id="historyList" class="p-3 border rounded">
+                            <p class="text-muted">No conversation history yet.</p>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Code execution result modal -->
-                <div class="modal fade" id="codeResultModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Code Execution Result</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="code-output">
-                                    <pre id="code-result"></pre>
+                <!-- Projects View -->
+                <div id="projectsView">
+                    <div class="main-header">
+                        <h1>Research Project Management</h1>
+                        <p class="lead">Create and manage your medical research projects</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Projects list -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>Your Research Projects</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div id="projectsList">
+                                        <p class="text-muted" id="noProjectsMessage">You don't have any projects yet. Create your first project to get started.</p>
+                                        <!-- Projects will be added here dynamically -->
+                                    </div>
                                 </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Create new project form -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>Create New Project</h4>
+                                </div>
+                                <div class="card-body">
+                                    <form id="newProjectForm">
+                                        <div class="mb-3">
+                                            <label for="projectName" class="form-label">Project Name</label>
+                                            <input type="text" class="form-control" id="projectName" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="projectDescription" class="form-label">Description</label>
+                                            <textarea class="form-control" id="projectDescription" rows="3"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">Create Project</button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Project actions for selected project -->
+                            <div class="card mt-4" id="projectActionsCard" style="display: none;">
+                                <div class="card-header">
+                                    <h4>Project Actions</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div id="selectedProjectInfo">
+                                        <h5 id="selectedProjectName"></h5>
+                                        <p id="selectedProjectDescription" class="text-muted"></p>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary" id="openProjectBtn">Open Project</button>
+                                        <button class="btn btn-danger" id="deleteProjectBtn">Delete Project</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data View -->
+                <div id="dataView">
+                    <div class="main-header">
+                        <h1>Data Management & Notebook Generation</h1>
+                        <p class="lead">Access datasets and generate analysis notebooks</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-7">
+                            <!-- NHANES Data Browser -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>NHANES Dataset Browser</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="nhanesCategory" class="form-label">Category</label>
+                                            <select class="form-select" id="nhanesCategory">
+                                                <option value="">Select Category</option>
+                                                <!-- Categories will be populated via JavaScript -->
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="nhanesCycle" class="form-label">Cycle</label>
+                                            <select class="form-select" id="nhanesCycle">
+                                                <option value="">Select Cycle</option>
+                                                <!-- Cycles will be populated via JavaScript -->
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="nhanesDatasets" class="mb-3">
+                                        <label class="form-label">Available Datasets</label>
+                                        <div class="row" id="datasetCheckboxes">
+                                            <!-- Datasets will be added here dynamically -->
+                                            <div class="col-12">
+                                                <p class="text-muted">Select a category and cycle to view available datasets</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="nhanesVariables" class="mb-3">
+                                        <h5>Popular Variables</h5>
+                                        <div id="popularVariablesList">
+                                            <!-- Popular variables will be added here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Datasets Display -->
+                            <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h4>Selected Datasets</h4>
+                                    <button class="btn btn-sm btn-outline-secondary" id="clearSelectionsBtn">Clear All</button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="selectedDatasetsList">
+                                        <p class="text-muted" id="noSelectionsMsg">No datasets selected yet</p>
+                                        <!-- Selected datasets will be shown here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-5">
+                            <!-- Notebook Generation -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>Generate Analysis Notebook</h4>
+                                </div>
+                                <div class="card-body">
+                                    <form id="notebookGeneratorForm">
+                                        <div class="mb-3">
+                                            <label for="researchQuestion" class="form-label">Research Question</label>
+                                            <input type="text" class="form-control" id="researchQuestion" required
+                                                   placeholder="e.g., Relationship between BMI and blood pressure">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="notebookType" class="form-label">Notebook Type</label>
+                                            <select class="form-select" id="notebookType">
+                                                <option value="nhanes">NHANES Analysis</option>
+                                                <option value="custom">Custom Data Analysis</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3" id="projectAssociationDiv">
+                                            <label for="associateProjectSelect" class="form-label">Associate with Project</label>
+                                            <select class="form-select" id="associateProjectSelect">
+                                                <option value="">None (Generate standalone notebook)</option>
+                                                <!-- Projects will be populated via JavaScript -->
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-success">Generate Notebook</button>
+                                        </div>
+                                    </form>
+                                    
+                                    <div id="notebookStatus" class="mt-3" style="display: none;"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Data Analysis Tips -->
+                            <div class="card mt-4">
+                                <div class="card-header">
+                                    <h4>NHANES Analysis Tips</h4>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">Use DEMO datasets for demographic information (age, gender, race)</li>
+                                        <li class="list-group-item">BMX datasets contain body measurements including height, weight, and BMI</li>
+                                        <li class="list-group-item">Always merge datasets using SEQN as the unique identifier</li>
+                                        <li class="list-group-item">Check codebooks for special values (e.g., negative numbers often represent missing data)</li>
+                                        <li class="list-group-item">Consider survey weights for nationally representative estimates</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -129,13 +365,730 @@
         </div>
     </div>
     
-    <!-- Bootstrap Bundle with Popper -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Highlight.js for code syntax highlighting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-    <!-- Marked for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Custom JavaScript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Application JavaScript -->
+    <script>
+        // Global state
+        const state = {
+            currentProjectId: null,
+            currentConversationId: null,
+            selectedProjectId: null,
+            conversationHistory: []
+        };
+        
+        // DOM Elements
+        const chatTab = document.getElementById('chatTab');
+        const projectsTab = document.getElementById('projectsTab');
+        const dataTab = document.getElementById('dataTab');
+        const chatView = document.getElementById('chatView');
+        const projectsView = document.getElementById('projectsView');
+        const dataView = document.getElementById('dataView');
+        const currentProjectBadge = document.getElementById('currentProjectBadge');
+        const currentProjectName = document.getElementById('currentProjectName');
+        const leaveProjectBtn = document.getElementById('leaveProjectBtn');
+        const projectsList = document.getElementById('projectsList');
+        const noProjectsMessage = document.getElementById('noProjectsMessage');
+        const projectActionsCard = document.getElementById('projectActionsCard');
+        const selectedProjectName = document.getElementById('selectedProjectName');
+        const selectedProjectDescription = document.getElementById('selectedProjectDescription');
+        const openProjectBtn = document.getElementById('openProjectBtn');
+        const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+        
+        // Switch between chat, projects, and data views
+        chatTab.addEventListener('click', () => {
+            chatTab.classList.add('active');
+            projectsTab.classList.remove('active');
+            dataTab.classList.remove('active');
+            chatView.style.display = 'block';
+            projectsView.style.display = 'none';
+            dataView.style.display = 'none';
+        });
+        
+        projectsTab.addEventListener('click', () => {
+            projectsTab.classList.add('active');
+            chatTab.classList.remove('active');
+            dataTab.classList.remove('active');
+            projectsView.style.display = 'block';
+            chatView.style.display = 'none';
+            dataView.style.display = 'none';
+            loadProjects(); // Refresh projects list when switching to projects view
+        });
+
+        dataTab.addEventListener('click', () => {
+            chatTab.classList.remove('active');
+            projectsTab.classList.remove('active');
+            dataTab.classList.add('active');
+            
+            chatView.style.display = 'none';
+            projectsView.style.display = 'none';
+            dataView.style.display = 'block';
+            
+            // Load NHANES data
+            loadNhanesData();
+        });
+        
+        // Initialize the view (start with chat view)
+        chatView.style.display = 'block';
+        dataView.style.display = 'none';
+        
+        // Backend form handling
+        const backendForm = document.getElementById('backendForm');
+        backendForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const backendSelect = document.getElementById('backendSelect');
+            const apiKey = document.getElementById('apiKey');
+            const modelName = document.getElementById('modelName');
+            
+            try {
+                const response = await fetch('/api/backend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        backend: backendSelect.value,
+                        api_key: apiKey.value,
+                        model: modelName.value
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Backend settings updated successfully!');
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error updating backend:', error);
+                alert('An error occurred while updating the backend settings.');
+            }
+        });
+        
+        // Query form handling
+        const queryForm = document.getElementById('queryForm');
+        queryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const queryInput = document.getElementById('queryInput');
+            const collaborationToggle = document.getElementById('collaborationToggle');
+            const responseContent = document.getElementById('responseContent');
+            const processingIndicator = document.getElementById('processingIndicator');
+            const historyList = document.getElementById('historyList');
+            
+            // Don't submit empty queries
+            if (!queryInput.value.trim()) return;
+            
+            // Show processing indicator
+            processingIndicator.style.display = 'flex';
+            responseContent.innerHTML = '';
+            
+            try {
+                // Choose the appropriate endpoint based on whether we're in a project
+                const endpoint = state.currentProjectId 
+                    ? `/api/projects/${state.currentProjectId}/query` 
+                    : '/api/query';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: queryInput.value,
+                        collaboration: collaborationToggle.checked
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Hide processing indicator
+                    processingIndicator.style.display = 'none';
+                    
+                    // Update response area
+                    if (data.workflow && data.workflow.length > 1) {
+                        // Show collaborative workflow
+                        let workflowHtml = `<h4>Response from ${data.agent_name}:</h4>`;
+                        workflowHtml += `<div class="collaborative-response mb-4">`;
+                        
+                        // First, show the main response
+                        workflowHtml += `<div class="mb-3">${formatResponse(data.response)}</div>`;
+                        
+                        // Then show individual contributions
+                        workflowHtml += `<h5>Collaborative Workflow:</h5>`;
+                        for (const step of data.workflow) {
+                            workflowHtml += `
+                                <div class="agent-contribution">
+                                    <div class="agent-name fw-bold">${step.agent_name}:</div>
+                                    <div>${formatResponse(step.contribution)}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        workflowHtml += `</div>`;
+                        responseContent.innerHTML = workflowHtml;
+                    } else {
+                        // Show single agent response
+                        responseContent.innerHTML = `
+                            <h4>Response from ${data.agent_name}:</h4>
+                            <div>${formatResponse(data.response)}</div>
+                        `;
+                    }
+                    
+                    // Add to history
+                    addToHistory(queryInput.value, data);
+                    
+                    // Clear the input
+                    queryInput.value = '';
+                    
+                    // Highlight code blocks
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightBlock(block);
+                    });
+                } else {
+                    // Handle errors
+                    processingIndicator.style.display = 'none';
+                    responseContent.innerHTML = `<div class="alert alert-danger">Error: ${data.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error processing query:', error);
+                processingIndicator.style.display = 'none';
+                responseContent.innerHTML = `<div class="alert alert-danger">An error occurred while processing your query.</div>`;
+            }
+        });
+        
+        // Format response content with code highlighting
+        function formatResponse(text) {
+            // Replace code blocks with formatted HTML
+            let formatted = text.replace(/```([\s\S]*?)```/g, function(match, code) {
+                // Check if there's a language specified
+                const firstLine = code.split('\n')[0].trim();
+                let language = '';
+                let codeContent = code;
+                
+                if (firstLine && !firstLine.startsWith('import') && !firstLine.startsWith('from') && !firstLine.startsWith('#')) {
+                    language = firstLine;
+                    codeContent = code.substring(firstLine.length);
+                }
+                
+                return `<pre><code class="${language}">${codeContent.trim()}</code></pre>`;
+            });
+            
+            // Replace line breaks with <br>
+            formatted = formatted.replace(/\n/g, '<br>');
+            
+            return formatted;
+        }
+        
+        // Add a Q&A exchange to the history
+        function addToHistory(query, response) {
+            const historyList = document.getElementById('historyList');
+            
+            // Create the history item
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item mb-4 p-2 border-bottom';
+            
+            // Add user query
+            const userQuery = document.createElement('div');
+            userQuery.className = 'user-query mb-2';
+            userQuery.innerHTML = `<strong>You:</strong> ${query}`;
+            
+            // Add AI response (simplified)
+            const aiResponse = document.createElement('div');
+            aiResponse.className = 'ai-response';
+            aiResponse.innerHTML = `<strong>AI (${response.agent_name}):</strong> ${response.response.substring(0, 150)}${response.response.length > 150 ? '...' : ''}`;
+            
+            // Assemble and add to history
+            historyItem.appendChild(userQuery);
+            historyItem.appendChild(aiResponse);
+            
+            // If no history yet, clear the placeholder text
+            if (historyList.querySelector('.text-muted')) {
+                historyList.innerHTML = '';
+            }
+            
+            // Add to the top of the history list
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            // Store in our state
+            state.conversationHistory.unshift({
+                query: query,
+                response: response
+            });
+        }
+        
+        // Project management functions
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                const projects = await response.json();
+                
+                if (projects.length === 0) {
+                    // No projects yet
+                    noProjectsMessage.style.display = 'block';
+                    projectsList.innerHTML = '';
+                } else {
+                    // Display projects
+                    noProjectsMessage.style.display = 'none';
+                    
+                    let projectsHtml = '';
+                    for (const project of projects) {
+                        const isActive = project.id === state.selectedProjectId;
+                        projectsHtml += `
+                            <div class="project-card ${isActive ? 'active' : ''}" data-project-id="${project.id}">
+                                <h5 class="card-title">${project.name}</h5>
+                                <p class="card-text text-muted">${project.description || 'No description'}</p>
+                                <div class="project-timestamps">
+                                    <small class="project-timestamp">Created: ${formatDate(project.created_at)}</small><br>
+                                    <small class="project-timestamp">Last updated: ${formatDate(project.updated_at)}</small>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    projectsList.innerHTML = projectsHtml;
+                    
+                    // Add click handlers
+                    document.querySelectorAll('.project-card').forEach(card => {
+                        card.addEventListener('click', function() {
+                            const projectId = this.getAttribute('data-project-id');
+                            selectProject(projectId);
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                projectsList.innerHTML = '<div class="alert alert-danger">Error loading projects</div>';
+            }
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+        
+        async function selectProject(projectId) {
+            // Update UI
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.getAttribute('data-project-id') === projectId) {
+                    card.classList.add('active');
+                }
+            });
+            
+            state.selectedProjectId = projectId;
+            
+            try {
+                const response = await fetch(`/api/projects/${projectId}`);
+                const project = await response.json();
+                
+                if (response.ok) {
+                    // Show project actions card
+                    projectActionsCard.style.display = 'block';
+                    selectedProjectName.textContent = project.name;
+                    selectedProjectDescription.textContent = project.description || 'No description';
+                } else {
+                    alert(`Error: ${project.error}`);
+                }
+            } catch (error) {
+                console.error('Error loading project details:', error);
+                alert('An error occurred while loading project details.');
+            }
+        }
+        
+        // Create new project
+        const newProjectForm = document.getElementById('newProjectForm');
+        newProjectForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const projectName = document.getElementById('projectName').value.trim();
+            const projectDescription = document.getElementById('projectDescription').value.trim();
+            
+            if (!projectName) {
+                alert('Project name is required');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: projectName,
+                        description: projectDescription
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Clear the form
+                    document.getElementById('projectName').value = '';
+                    document.getElementById('projectDescription').value = '';
+                    
+                    // Reload the projects list
+                    loadProjects();
+                    
+                    // Select the new project
+                    selectProject(data.id);
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('An error occurred while creating the project.');
+            }
+        });
+        
+        // Open project button
+        openProjectBtn.addEventListener('click', async () => {
+            if (!state.selectedProjectId) return;
+            
+            try {
+                const response = await fetch(`/api/projects/${state.selectedProjectId}`);
+                const project = await response.json();
+                
+                if (response.ok) {
+                    // Set the current project
+                    state.currentProjectId = project.id;
+                    
+                    // Update UI
+                    currentProjectName.textContent = project.name;
+                    currentProjectBadge.style.display = 'block';
+                    
+                    // Switch to chat view
+                    chatTab.click();
+                    
+                    // Clear previous responses
+                    document.getElementById('responseContent').innerHTML = '<p class="text-muted">Your response will appear here...</p>';
+                    document.getElementById('historyList').innerHTML = '<p class="text-muted">No conversation history yet.</p>';
+                    state.conversationHistory = [];
+                } else {
+                    alert(`Error: ${project.error}`);
+                }
+            } catch (error) {
+                console.error('Error opening project:', error);
+                alert('An error occurred while opening the project.');
+            }
+        });
+        
+        // Delete project button
+        deleteProjectBtn.addEventListener('click', async () => {
+            if (!state.selectedProjectId) return;
+            
+            if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/projects/${state.selectedProjectId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // If we were in this project, leave it
+                    if (state.currentProjectId === state.selectedProjectId) {
+                        leaveProjectBtn.click();
+                    }
+                    
+                    // Clear selected project
+                    state.selectedProjectId = null;
+                    projectActionsCard.style.display = 'none';
+                    
+                    // Reload the projects list
+                    loadProjects();
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                alert('An error occurred while deleting the project.');
+            }
+        });
+        
+        // Leave project button
+        leaveProjectBtn.addEventListener('click', () => {
+            state.currentProjectId = null;
+            currentProjectBadge.style.display = 'none';
+            
+            // Clear conversation history when leaving a project
+            document.getElementById('historyList').innerHTML = '<p class="text-muted">No conversation history yet.</p>';
+            state.conversationHistory = [];
+        });
+        
+        // Example questions
+        document.querySelectorAll('.example-question').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const query = this.textContent;
+                document.getElementById('queryInput').value = query;
+                // Optionally auto-submit
+                // document.getElementById('queryForm').dispatchEvent(new Event('submit'));
+            });
+        });
+        
+        // Load projects on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+            
+            // Load backend info
+            fetch('/api/backend')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.backend) {
+                        document.getElementById('backendSelect').value = data.backend;
+                    }
+                    if (data.model) {
+                        document.getElementById('modelName').placeholder = data.model;
+                    }
+                })
+                .catch(error => console.error('Error loading backend info:', error));
+        });
+
+        // Load NHANES datasets
+        async function loadNhanesData() {
+            try {
+                const response = await fetch('/api/nhanes/datasets');
+                const data = await response.json();
+                
+                // Populate cycles dropdown
+                const cycleSelect = document.getElementById('nhanesCycle');
+                cycleSelect.innerHTML = '<option value="">Select Cycle</option>';
+                data.cycles.forEach(cycle => {
+                    cycleSelect.innerHTML += `<option value="${cycle}">${cycle}</option>`;
+                });
+                
+                // Populate categories dropdown
+                const categorySelect = document.getElementById('nhanesCategory');
+                categorySelect.innerHTML = '<option value="">Select Category</option>';
+                Object.keys(data.categories).forEach(category => {
+                    categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
+                });
+                
+                // Store data for later use
+                window.nhanesData = data;
+                
+                // Populate popular variables
+                const popularVariablesList = document.getElementById('popularVariablesList');
+                popularVariablesList.innerHTML = '';
+                
+                Object.entries(data.popular_variables).forEach(([name, info]) => {
+                    popularVariablesList.innerHTML += `
+                        <div class="popular-variable mb-2">
+                            <strong>${name}</strong> (${info.dataset}): ${info.description}
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error('Error loading NHANES data:', error);
+            }
+        }
+
+        // Handle category and cycle selection
+        document.getElementById('nhanesCategory').addEventListener('change', updateDatasetsList);
+        document.getElementById('nhanesCycle').addEventListener('change', updateDatasetsList);
+
+        function updateDatasetsList() {
+            const category = document.getElementById('nhanesCategory').value;
+            const cycle = document.getElementById('nhanesCycle').value;
+            const datasetCheckboxes = document.getElementById('datasetCheckboxes');
+            
+            if (!category || !cycle || !window.nhanesData) {
+                datasetCheckboxes.innerHTML = '<div class="col-12"><p class="text-muted">Select a category and cycle to view available datasets</p></div>';
+                return;
+            }
+            
+            const datasets = window.nhanesData.categories[category] || [];
+            if (datasets.length === 0) {
+                datasetCheckboxes.innerHTML = '<div class="col-12"><p class="text-muted">No datasets available for this selection</p></div>';
+                return;
+            }
+            
+            datasetCheckboxes.innerHTML = '';
+            datasets.forEach(dataset => {
+                datasetCheckboxes.innerHTML += `
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input dataset-checkbox" type="checkbox" value="${dataset}" 
+                                   id="dataset-${dataset}" data-dataset="${dataset}">
+                            <label class="form-check-label" for="dataset-${dataset}">
+                                ${dataset}
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Add event listeners to checkboxes
+            document.querySelectorAll('.dataset-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedDatasets);
+            });
+        }
+
+        // Track selected datasets
+        const selectedDatasets = new Set();
+
+        function updateSelectedDatasets(e) {
+            const checkbox = e.target;
+            const dataset = checkbox.getAttribute('data-dataset');
+            
+            if (checkbox.checked) {
+                selectedDatasets.add(dataset);
+            } else {
+                selectedDatasets.delete(dataset);
+            }
+            
+            displaySelectedDatasets();
+        }
+
+        function displaySelectedDatasets() {
+            const selectedDatasetsList = document.getElementById('selectedDatasetsList');
+            const noSelectionsMsg = document.getElementById('noSelectionsMsg');
+            
+            if (selectedDatasets.size === 0) {
+                noSelectionsMsg.style.display = 'block';
+                selectedDatasetsList.innerHTML = '<p class="text-muted" id="noSelectionsMsg">No datasets selected yet</p>';
+                return;
+            }
+            
+            noSelectionsMsg.style.display = 'none';
+            
+            selectedDatasetsList.innerHTML = '<ul class="list-group">';
+            selectedDatasets.forEach(dataset => {
+                selectedDatasetsList.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        ${dataset}
+                        <button class="btn btn-sm btn-danger remove-dataset" data-dataset="${dataset}">
+                            <i class="bi bi-x"></i> Remove
+                        </button>
+                    </li>
+                `;
+            });
+            selectedDatasetsList.innerHTML += '</ul>';
+            
+            // Add event listeners to remove buttons
+            document.querySelectorAll('.remove-dataset').forEach(button => {
+                button.addEventListener('click', function() {
+                    const dataset = this.getAttribute('data-dataset');
+                    selectedDatasets.delete(dataset);
+                    
+                    // Uncheck the corresponding checkbox if it exists
+                    const checkbox = document.querySelector(`#dataset-${dataset}`);
+                    if (checkbox) checkbox.checked = false;
+                    
+                    displaySelectedDatasets();
+                });
+            });
+        }
+
+        // Clear selections button
+        document.getElementById('clearSelectionsBtn').addEventListener('click', function() {
+            selectedDatasets.clear();
+            
+            // Uncheck all checkboxes
+            document.querySelectorAll('.dataset-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            displaySelectedDatasets();
+        });
+
+        // Notebook generator form
+        document.getElementById('notebookGeneratorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const researchQuestion = document.getElementById('researchQuestion').value;
+            const notebookType = document.getElementById('notebookType').value;
+            const associatedProject = document.getElementById('associateProjectSelect').value;
+            
+            if (selectedDatasets.size === 0) {
+                alert('Please select at least one dataset');
+                return;
+            }
+            
+            const notebookStatus = document.getElementById('notebookStatus');
+            notebookStatus.innerHTML = '<div class="alert alert-info">Generating notebook...</div>';
+            notebookStatus.style.display = 'block';
+            
+            try {
+                let endpoint = '/api/notebook/generate';
+                let requestData = {
+                    type: notebookType,
+                    research_question: researchQuestion,
+                    datasets: Array.from(selectedDatasets)
+                };
+                
+                // If associated with a project, use project endpoint
+                if (associatedProject) {
+                    endpoint = `/api/projects/${associatedProject}/notebooks`;
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (associatedProject) {
+                        // Notebook saved to project
+                        notebookStatus.innerHTML = `
+                            <div class="alert alert-success">
+                                <p>Notebook created successfully and saved to your project!</p>
+                                <p>Go to the Projects tab to access it.</p>
+                            </div>
+                        `;
+                    } else {
+                        // Download the notebook
+                        notebookStatus.innerHTML = `
+                            <div class="alert alert-success">
+                                <p>Notebook generated successfully!</p>
+                                <p>
+                                    <a href="data:application/octet-stream;base64,${data.notebook_b64}" 
+                                       download="${data.filename}" class="btn btn-primary">
+                                        Download Notebook
+                                    </a>
+                                </p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    notebookStatus.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                console.error('Error generating notebook:', error);
+                notebookStatus.innerHTML = `<div class="alert alert-danger">An error occurred while generating the notebook.</div>`;
+            }
+        });
+
+        // Load projects into associate project select
+        function loadProjectsForNotebook() {
+            const projectSelect = document.getElementById('associateProjectSelect');
+            projectSelect.innerHTML = '<option value="">None (Generate standalone notebook)</option>';
+            
+            fetch('/api/projects')
+                .then(response => response.json())
+                .then(projects => {
+                    if (projects.length > 0) {
+                        projects.forEach(project => {
+                            projectSelect.innerHTML += `<option value="${project.id}">${project.name}</option>`;
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading projects:', error));
+        }
+
+        // Call once on initial page load
+        window.addEventListener('DOMContentLoaded', () => {
+            // ...existing code...
+            
+            // Load projects for notebook association
+            loadProjectsForNotebook();
+        });
+    </script>
 </body>
 </html>
